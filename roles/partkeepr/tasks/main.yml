@@ -36,18 +36,21 @@
       </Directory>
 
 
-#- name: Download and extract partkeepr
-#  unarchive:
-#    src: "https://downloads.partkeepr.org/partkeepr-{{partkeepr_version}}.tbz2"
-#    dest: /var/www/
-#    creates: yes
-#    remote_src: yes
+- name: Download and extract partkeepr
+  unarchive:
+    src: "https://downloads.partkeepr.org/partkeepr-{{partkeepr_version}}.tbz2"
+    dest: /var/www/
+    creates: /var/www/partkeepr-{{partkeepr_version}}
+    remote_src: yes
 
-- name: Create Symlink
+- name: Create Symlinks
   file:
-    src: /var/www/partkeepr-{{partkeepr_version}}/web
-    dest: /var/www/html/partkeepr
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
     state: link
+  with_items:
+    - { src: "/var/www/partkeepr-{{partkeepr_version}}" , dest: /var/www/partkeepr-current }
+    - { src: "/var/www/partkeepr-{{partkeepr_version}}/web" , dest: /var/www/html/partkeepr }
 
 - name: Give webserver some rights
   file:

@@ -1,0 +1,4 @@
+---
+- name: Set the machine's hostname
+  hostname:
+    name: parts

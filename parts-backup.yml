@@ -1,0 +1,31 @@
+---
+- hosts: default
+  vars:
+    backup_dir: "/backups/{{ ansible_date_time.date }}"
+
+  tasks:
+    - name: Create database backup directory.
+      file:
+        path: /var/www/partkeepr-current/backup-db
+        owner: postgres
+        state: directory
+      become: true
+
+    - name: Backup the database.
+      shell: "pg_dump partkeepr | gzip > /var/www/partkeepr-current/backup-db/partkeepr.sql.gz"
+      become: true
+      become_user: postgres
+
+    - name: Create backup directory.
+      file:
+        path: "{{ backup_dir }}"
+        owner: root
+        state: directory
+        mode: 700
+      become: true
+
+    - name: Create a backup archive.
+      archive:
+        path: /var/www/partkeepr-current/
+        dest: "{{ backup_dir }}/partkeepr.tar.gz"
+      become: true
