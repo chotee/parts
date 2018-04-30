@@ -1,0 +1,11 @@
+---
+- hosts: default
+  pre_tasks:
+    - name: Verify Ansible meets version requirements.
+      assert:
+        that: "ansible_version.full is version_compare('2.2', '>=')"
+        msg: >
+          "You must update Ansible to at least 2.2 to use this."
+  roles:
+  - { role: cron-apt, become: yes }
+  - { role: partkeepr, become: yes }

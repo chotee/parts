@@ -1,0 +1,92 @@
+- name: Install Prerequisits
+  apt:
+    name: "{{ item }}"
+  with_items:
+  - php
+  - php-xml
+  - php-gd
+  - php-ldap
+  - php-curl
+  - php-intl
+  - php-apcu
+  - postgresql
+  - php-pgsql
+  - python-psycopg2
+  become: true
+
+- name: Fix the php.ini file
+  lineinfile:
+    dest: /etc/php/7.0/apache2/php.ini
+    regexp: '^;date.timezone ='
+    line: 'date.timezone = Europe/Amsterdam'
+
+- name: Enable apache module rewrite
+  apache2_module:
+    state: present
+    name: rewrite
+
+- name: Change Apache configuration
+  blockinfile:
+    dest: /etc/apache2/sites-enabled/000-default.conf
+    insertafter: 'DocumentRoot /var/www/html'
+    block: |
+      <Directory /var/www/html/partkeepr/>
+        Require all granted
+        AllowOverride All
+      </Directory>
+
+
+#- name: Download and extract partkeepr
+#  unarchive:
+#    src: "https://downloads.partkeepr.org/partkeepr-{{partkeepr_version}}.tbz2"
+#    dest: /var/www/
+#    creates: yes
+#    remote_src: yes
+
+- name: Create Symlink
+  file:
+    src: /var/www/partkeepr-{{partkeepr_version}}/web
+    dest: /var/www/html/partkeepr
+    state: link
+
+- name: Give webserver some rights
+  file:
+    path: "/var/www/partkeepr-{{partkeepr_version}}/{{item}}"
+    owner: www-data
+    group: www-data
+    recurse: yes
+  with_items:
+    - data
+    - app
+    - web
+    - src/PartKeepr/FrontendBundle/Resources/public/
+    - src/PartKeepr/ImageBundle/Resources/public/
+    - src/PartKeepr/MimetypeIconsBundle/Resources/public/
+    - src/PartKeepr/MobileFrontendBundle/Resources/public/
+    - vendor/brainbits/fugue-icons-bundle/src/Brainbits/FugueIconsBundle/Resources/public/
+    - vendor/sensio/distribution-bundle/Sensio/Bundle/DistributionBundle/Resources/public/
+    - vendor/symfony/symfony/src/Symfony/Bundle/FrameworkBundle/Resources/public/
+
+- name:
+  service:
+    name: apache2
+    state: restarted
+
+- name: Create the database user
+  postgresql_user:
+    name: partkeepr
+    password: "{{ partkeepr_database_password }}"
+  become_user: postgres
+
+- name: Create the database
+  postgresql_db:
+    name: partkeepr
+    owner: partkeepr
+  become_user: postgres
+
+- name: Setup a cronjob
+  cron:
+    name: "Partkeepr cronjob"
+    minute: "3"
+    hour: "*/4"
+    job: "/usr/bin/php /var/www/partkeepr-{{partkeepr_version}}/app/console partkeepr:cron:run"
