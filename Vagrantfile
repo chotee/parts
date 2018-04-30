@@ -72,7 +72,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision "ansible" do |ansible|
     ansible.verbose = "v"
     ansible.playbook = "parts-install.yml"
-#      ansible.groups = { 'acc' => ['default'] }
+    ansible.groups = { 'partkeepr' => ['default'] }
 #    ansible.extra_vars = "@group_vars/acc/vars"
   end
 

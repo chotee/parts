@@ -1,0 +1,4 @@
+partkeepr_version: 1.4.0
+partkeepr_database_password: "{{vault_partkeepr_database_password}}"
+partkeepr_admin_username: "{{vault_partkeepr_admin_username}}"
+partkeepr_admin_password: "{{vault_partkeepr_admin_password}}"
